@@ -44,10 +44,24 @@
         <button id="verifyTotp">Verify</button> Result: <span id="verifyTotpResult"></span>
     </p>
 
+    <h2>Google Authenticator</h2>
+    <p>
+        <label for="user">User</label>
+        <input name="user" id="user" value="test user name">
+    </p>
+    <p>
+        <label for="service">Service Name</label>
+        <input name="service" id="service" value="Awesome OTP">
+    </p>
+    <p>
+        <img id="qrcode" />
+    </p>
+
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="https://unpkg.com/otplib@^6.0.0/otplib-browser.js"></script>
     <script>
         $(document).ready(function () {
+            var qrCodeApi = 'https://chart.googleapis.com/chart?cht=qr&chs=500x500&chl=';
             function generateHoptPassword() {
                 var token = otplib.hotp.generate($('#secret').val(), $('#counter').val());
                 $('#hotpPassword').val(token);
@@ -59,6 +73,13 @@
                 };
                 var token = otplib.authenticator.generate($('#secret').val());
                 $('#totpPassword').val(token);
+
+                var authParam = otplib.authenticator.keyuri(
+                    encodeURIComponent($('#user').val()), 
+                    encodeURIComponent($('#service').val()), 
+                    $('#secret').val());
+                var url = qrCodeApi + encodeURIComponent(authParam);
+                $('#qrcode').attr('src', url);
             }
 
             function checkTimeLeft() {
@@ -101,12 +122,12 @@
                 }
             });
 
-            $('#verifyTotp').click(function(){
+            $('#verifyTotp').click(function () {
                 var result = otplib.authenticator.verify({
                     secret: $('#secret').val(),
                     token: $('#totpPassword').val()
                 });
-                
+
 
                 if (result) {
                     $('#verifyTotpResult').text('pass');
