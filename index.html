@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>OTP Demo</title>
+</head>
+
+<body>
+    <h1>Options</h1>
+    <p>
+        <label for="secret">Secret Key</label>
+        <input name="secret" id="secret" size="64" />
+        <button id="generateSecret">Generate Secret</button>
+    </p>
+    <h2>HOTP</h2>
+    <p>
+        <label for="counter">Counter (Message)</label>
+        <input name="counter" id="counter" size="64" value="any data...">
+        <button id="generateHoptPassword">Generate HOPT password</button>
+    </p>
+    <p>
+        HOPT Password：<input id="hotpPassword" />
+    </p>
+    <p>
+        <button id="verifyHotp">Verify</button>
+        Result: <span id="verifyHotpResult"></span>
+    </p>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://unpkg.com/otplib@^6.0.0/otplib-browser.js"></script>
+    <script>
+        $(document).ready(function(){
+            $('#generateSecret').click(function(){
+                var secret = otplib.authenticator.generateSecret();
+                $('#secret').val(secret);
+            });
+
+            $('#generateHoptPassword').click(function(){
+                var token = otplib.hotp.generate($('#secret').val(), $('#counter').val());
+                $('#hotpPassword').val(token)
+            });
+
+            $('#verifyHotp').click(function(){
+                var result = otplib.hotp.verify({
+                    token: $('#hotpPassword').val(),
+                    secret: $('#secret').val(),
+                    counter: $('#counter').val()
+                });
+
+                if(result){
+                    $('#verifyHotpResult').text('pass');
+                }else{
+                    $('#verifyHotpResult').text('fail');
+                }
+            });
+        });
+        </script>
+</body>
+</html>
