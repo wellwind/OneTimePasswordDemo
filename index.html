@@ -15,47 +15,109 @@
         <input name="secret" id="secret" size="64" />
         <button id="generateSecret">Generate Secret</button>
     </p>
+
     <h2>HOTP</h2>
     <p>
         <label for="counter">Counter (Message)</label>
-        <input name="counter" id="counter" size="64" value="any data...">
+        <input name="counter" id="counter" size="64" value="" placeholder="any number...">
         <button id="generateHoptPassword">Generate HOPT password</button>
     </p>
     <p>
         HOPT Password：<input id="hotpPassword" />
     </p>
     <p>
-        <button id="verifyHotp">Verify</button>
-        Result: <span id="verifyHotpResult"></span>
+        <button id="verifyHotp">Verify</button> Result: <span id="verifyHotpResult"></span>
     </p>
+
+    <h2>TOTP</h2>
+    <p>
+        <label for="tc">TC</label>
+        <input name="tc" id="tc" value="30">
+    </p>
+    <p>
+        TOTP Password：<input id="totpPassword" />
+    </p>
+    <p>
+        <span id="timeLeft"></span> sec left.
+    </p>
+    <p>
+        <button id="verifyTotp">Verify</button> Result: <span id="verifyTotpResult"></span>
+    </p>
+
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="https://unpkg.com/otplib@^6.0.0/otplib-browser.js"></script>
     <script>
-        $(document).ready(function(){
-            $('#generateSecret').click(function(){
+        $(document).ready(function () {
+            function generateHoptPassword() {
+                var token = otplib.hotp.generate($('#secret').val(), $('#counter').val());
+                $('#hotpPassword').val(token);
+            }
+
+            function generateTotpPassword() {
+                otplib.authenticator.options = {
+                    step: parseInt($('#tc').val())
+                };
+                var token = otplib.authenticator.generate($('#secret').val());
+                $('#totpPassword').val(token);
+            }
+
+            function checkTimeLeft() {
+                var tc = parseInt($('#tc').val());
+                var epoch = Math.floor(new Date().getTime() / 1000);
+                var count = epoch % tc;
+                var timeLeft = tc - count;
+                $('#timeLeft').text(timeLeft);
+                if (timeLeft === tc) {
+                    generateTotpPassword();
+                }
+            }
+
+            var refreshTotpHandle = setInterval(checkTimeLeft, 1000);
+            generateTotpPassword();
+            checkTimeLeft();
+
+            $('#generateSecret').click(function () {
                 var secret = otplib.authenticator.generateSecret();
                 $('#secret').val(secret);
+                generateHoptPassword();
+                generateTotpPassword();
             });
 
-            $('#generateHoptPassword').click(function(){
-                var token = otplib.hotp.generate($('#secret').val(), $('#counter').val());
-                $('#hotpPassword').val(token)
+            $('#generateHoptPassword').click(function () {
+                generateHoptPassword();
             });
 
-            $('#verifyHotp').click(function(){
+            $('#verifyHotp').click(function () {
                 var result = otplib.hotp.verify({
                     token: $('#hotpPassword').val(),
                     secret: $('#secret').val(),
                     counter: $('#counter').val()
                 });
 
-                if(result){
+                if (result) {
                     $('#verifyHotpResult').text('pass');
-                }else{
+                } else {
                     $('#verifyHotpResult').text('fail');
                 }
             });
+
+            $('#verifyTotp').click(function(){
+                var result = otplib.authenticator.verify({
+                    secret: $('#secret').val(),
+                    token: $('#totpPassword').val()
+                });
+                
+
+                if (result) {
+                    $('#verifyTotpResult').text('pass');
+                } else {
+                    $('#verifyTotpResult').text('fail');
+                }
+            })
+
+            $('#generateSecret').trigger('click');
         });
-        </script>
+    </script>
 </body>
+
 </html>
